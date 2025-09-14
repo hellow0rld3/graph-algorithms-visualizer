@@ -1,7 +1,6 @@
 """
 Graph Data Structure
 """
-
 class Node:
     def __init__(self, x, y, node_id):
         self.x = x
@@ -31,7 +30,7 @@ class Graph:
         return node
     
     def add_edge(self, node1_id, node2_id, weight=1):
-        if node1_id and node2_id in self.nodes:
+        if node1_id in self.nodes and node2_id in self.nodes:
             node1 = self.nodes[node1_id]
             node2 = self.nodes[node2_id]
             edge = Edge(node1, node2, weight)
@@ -48,5 +47,5 @@ class Graph:
             #For undirected graphs
             elif edge.node2.id == node_id:
                 neighbors.append(edge.node1)
-                
+
         return neighbors
