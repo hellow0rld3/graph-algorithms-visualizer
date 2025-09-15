@@ -30,6 +30,9 @@ def main():
     running = True
     hovered_node = None
 
+    dragging = False
+    drag_start_node = None
+
     graph = Graph()
 
     while running:
@@ -41,11 +44,19 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     x, y = event.pos
-                    graph.add_node(x,y)
+                    clicked_node = find_node_at_position(graph,x,y)
+                    #zaczynamy przeciąganie jeśli zaczynamy klikać w istniejący węzeł
+                    if clicked_node is not None:
+                        dragging = True
+                        drag_start_node = clicked_node
+                    #dodajemy węzeł jezeli kliknęliśmy w puste miejsce
+                    else:
+                        graph.add_node(x,y)
                 
+                #Usuwanie węzła
                 if event.button == 3:
                     x, y = event.pos
                     clicked_node = find_node_at_position(graph, x, y)
@@ -56,6 +67,18 @@ def main():
                                         edge.node2.id != clicked_node.id]
                         del graph.nodes[clicked_node.id]
 
+            elif event.type == pygame.MOUSEBUTTONUP and dragging:
+                x, y = event.pos
+                drag_end_node = find_node_at_position(graph,x,y)
+                if drag_end_node is not None and drag_end_node != drag_start_node:
+                    graph.add_edge(drag_start_node.id, drag_end_node.id)
+
+                dragging = False
+                drag_start_node = None
+
+                    
+
+
 
         screen.fill(WHITE)
         
@@ -64,6 +87,14 @@ def main():
         for edge in graph.edges:
             pygame.draw.line(screen, edge.color, (edge.node1.x, edge.node1.y), 
                              (edge.node2.x, edge.node2.y), 3)
+        
+
+        # Narysuj tymczasową linię od węzła startowego do kursora
+        if dragging and drag_start_node is not None:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            pygame.draw.line(screen, (255, 0, 0), 
+                            (drag_start_node.x, drag_start_node.y), 
+                            (mouse_x, mouse_y), 2)
             
         #Teraz węzły
 
