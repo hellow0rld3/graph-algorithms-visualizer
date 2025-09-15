@@ -3,6 +3,7 @@ import sys
 import math
 
 from graph import Graph
+from algorithms.bfs import bfs
 
 def find_node_at_position(graph, x, y):
     """Znajdź węzeł na danej pozycji (sprawdza kolizję z okręgiem)"""
@@ -75,11 +76,16 @@ def main():
 
                 dragging = False
                 drag_start_node = None
-
+            
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    if len(graph.nodes) > 0:
+                        start_id = list(graph.nodes.keys())[0]
+                        visited, parent, dist = bfs(graph, start_id)
+                        print(f"BFS od węzła {start_id}:")
+                        print(f"odwiedzone: {visited}")
+                        print(f"Odległości: {dist}")
                     
-
-
-
         screen.fill(WHITE)
         
         #Rysujemy krawędzie, aby były "pod" węzłami
