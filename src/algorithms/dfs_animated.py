@@ -1,9 +1,8 @@
-from queue import Queue
 from math import inf
 
 
-def bfs_animated(graph,start_node_id):
-    Q = Queue()
+def dfs_animated(graph,start_node_id):
+    Q = []
     visited = {}
     parent = {}
     dist = {}
@@ -15,17 +14,17 @@ def bfs_animated(graph,start_node_id):
 
     dist[start_node_id] = 0
     visited[start_node_id] = True
-    Q.put(start_node_id)
+    Q.append(start_node_id)
 
-    while not Q.empty():
-        u = Q.get()
+    while Q:
+        u = Q.pop()
 
         #obecnie przetwarzany wierzchołek zmieniamy na kolor czerwony
         graph.nodes[u].color = (255,0,0)
         yield {
             "message": f"Przetwarzam węzeł {u}",
-            "algorithm": "bfs",
-            "queue": list(Q.queue),  # Aktualna kolejka
+            "algorithm": "dfs",
+            "queue": Q.copy(),  # Aktualna kolejka
             "visited": visited.copy(),
             "parent": parent.copy(),
             "dist": dist.copy(),
@@ -39,14 +38,14 @@ def bfs_animated(graph,start_node_id):
                 visited[v] = True
                 parent[v] = u
                 dist[v] = dist[u] + 1
-                Q.put(v)
+                Q.append(v)
 
                 #węzły w kolejce zmieniamy na kolor zółty
                 graph.nodes[v].color = (255,255,0) 
                 yield {
-                    "message": f"Dodaję węzeł {v} do kolejki",
-                    "algorithm": "bfs",
-                    "queue": list(Q.queue),
+                    "message": f"Dodaję węzeł {v} do stosu",
+                    "algorithm": "dfs",
+                    "queue": Q.copy(),
                     "visited": visited.copy(),
                     "parent": parent.copy(),
                     "dist": dist.copy(),
@@ -57,8 +56,8 @@ def bfs_animated(graph,start_node_id):
         graph.nodes[u].color = (0,255,0)
         yield {
             "message": f"Węzeł {u} przetworzony",
-            "algorihtm": "bfs",
-            "queue": list(Q.queue),
+            "algorithm": "dfs",
+            "queue": Q.copy(),
             "visited": visited.copy(),
             "parent": parent.copy(),
             "dist": dist.copy(),

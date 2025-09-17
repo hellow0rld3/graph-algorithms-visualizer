@@ -3,8 +3,8 @@ import sys
 import math
 
 from graph import Graph
-from algorithms.bfs import bfs
 from algorithms.bfs_animated import bfs_animated
+from algorithms.dfs_animated import dfs_animated
 
 def find_node_at_position(graph, x, y):
     """Znajdź węzeł na danej pozycji (sprawdza kolizję z okręgiem)"""
@@ -14,47 +14,52 @@ def find_node_at_position(graph, x, y):
             return node
     return None
 
-def bfs_draw_state(screen, bfs_data, font):
-    """Rysuj aktualny stan BFS po prawej stronie"""
-    if bfs_data is None:
+def draw_algorithm_state(screen, data, font):
+    """Rysuj aktualny stan algorytmu (BFS lub DFS) po prawej stronie"""
+    if data is None:
         return
     
     x_start = 950
     y_start = 50
     line_height = 25
 
-    #Tytuł
-    title = font.render("Stan BFS:", True, (0,0,0))
+    is_dfs = data.get("algorithm") == "dfs"
+    
+    # Tytuł
+    title_text = "Stan DFS:" if is_dfs else "Stan BFS:"
+    title = font.render(title_text, True, (0, 0, 0))
     screen.blit(title, (x_start, y_start))
     y = y_start + 40
 
-    #Aktualna kolejka
-    queue_text = font.render("Kolejka: " + str(bfs_data["queue"]), True, (0,0,0))
+    # Kolejka/Stos
+    queue_label = "Stos: " if is_dfs else "Kolejka: "
+    queue_text = font.render(queue_label + str(data["queue"]), True, (0, 0, 0))
     screen.blit(queue_text, (x_start, y))
     y += line_height
 
-    #Odwiedzone węzły
-    visited_nodes = [k for k, v in bfs_data["visited"].items() if v]
-    visited_text = font.render("Odwiedzone: " + str(visited_nodes), True, (0,0,0))
+    # Odwiedzone węzły
+    visited_nodes = [k for k, v in data["visited"].items() if v]
+    visited_text = font.render("Odwiedzone: " + str(visited_nodes), True, (0, 0, 0))
     screen.blit(visited_text, (x_start, y))
     y += line_height
 
-    #Akutalnie przetwarzany
-    if bfs_data["current_node"] is not None:
-        current_text = font.render(f"Aktualny: {bfs_data['current_node']}", True, (255,0,0))
+    # Aktualnie przetwarzany
+    if data["current_node"] is not None:
+        current_text = font.render(f"Aktualny: {data['current_node']}", True, (255, 0, 0))
         screen.blit(current_text, (x_start, y))
     y += line_height * 2
 
-    #Odległości
-    dist_text = font.render("Odległości: ", True, (0,0,0))
-    screen.blit(dist_text, (x_start, y))
-    y += line_height
+    # Odległości tylko dla BFS
+    if not is_dfs:
+        dist_text = font.render("Odległości:", True, (0, 0, 0))
+        screen.blit(dist_text, (x_start, y))
+        y += line_height
 
-    for node_id in visited_nodes:
-        if bfs_data ["dist"][node_id] != float('inf'):
-            text = font.render(f"  {node_id}: {bfs_data['dist'][node_id]}", True, (0,0,0))
-            screen.blit(text, (x_start, y))
-            y += line_height
+        for node_id in visited_nodes:
+            if data["dist"][node_id] != float('inf'):
+                text = font.render(f"  {node_id}: {data['dist'][node_id]}", True, (0, 0, 0))
+                screen.blit(text, (x_start, y))
+                y += line_height
 
 def main():
     pygame.init()
@@ -77,6 +82,7 @@ def main():
     dragging = False
     drag_start_node = None
     bfs_gen = None
+    dfs_gen = None
     current_bfs_data = None
 
     graph = Graph()
@@ -132,10 +138,6 @@ def main():
                         start_id = list(graph.nodes.keys())[0]
                         bfs_gen = bfs_animated(graph,start_id)
 
-                        visited, parent, dist = bfs(graph, start_id)
-                        print(f"BFS od węzła {start_id}:")
-                        print(f"odwiedzone: {visited}")
-                        print(f"Odległości: {dist}")
                 
                 elif event.key == pygame.K_RIGHT:
                     if bfs_gen is not None:
@@ -149,6 +151,26 @@ def main():
                             bfs_gen = None
                             current_bfs_data = None
                     
+                    elif dfs_gen is not None:
+                        try:
+                            data = next(dfs_gen)
+                            print(data["message"])
+                            current_bfs_data = data  # Używamy tej samej zmiennej do wyświetlania
+                        except StopIteration:
+                            print("DFS zakończony!")
+                            dfs_gen = None
+                            current_bfs_data = None
+
+                elif event.key == pygame.K_LSHIFT:  # Lewy Shift
+                    if len(graph.nodes) > 0:
+                        # Resetuj kolory
+                        for node in graph.nodes.values():
+                            node.color = (100, 100, 100)
+                        
+                        start_id = list(graph.nodes.keys())[0]
+                        dfs_gen = dfs_animated(graph, start_id)
+                        graph.nodes[start_id].color = (255, 255, 0)
+
         screen.fill(WHITE)
         
         #Rysujemy krawędzie, aby były "pod" węzłami
@@ -192,8 +214,8 @@ def main():
         screen.blit(info_surface, (10, 10))
 
         if current_bfs_data:
-            instruction_font = pygame.font.Font(None, 20)  # Mniejszy font
-            bfs_draw_state(screen, current_bfs_data, instruction_font)  
+            instruction_font = pygame.font.Font(None, 20) 
+            draw_algorithm_state(screen, current_bfs_data, instruction_font)  
     
         pygame.display.flip()
         clock.tick(60)
